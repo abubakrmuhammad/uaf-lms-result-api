@@ -3,7 +3,7 @@ const puppeteer = require('puppeteer');
 const formURL = 'http://lms.uaf.edu.pk/login/index.php';
 
 async function getResult(ag) {
-  const browser = await puppeteer.launch({ headless: false });
+  const browser = await puppeteer.launch({});
   const page = await browser.newPage();
   page.setDefaultTimeout(0);
 
