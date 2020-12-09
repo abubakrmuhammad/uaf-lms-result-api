@@ -18,4 +18,8 @@ app.get('/result/:ag', async (req, res) => {
   res.status(200).json(data);
 });
 
+app.all('*', (req, res) => {
+  res.status(404).send('ROUTE NOT FOUND: Use /result/:ag endpoint for results');
+});
+
 module.exports = app;
