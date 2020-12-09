@@ -1,67 +1,70 @@
 const puppeteer = require('puppeteer');
 
-module.exports = (async function () {
+const formURL = 'http://lms.uaf.edu.pk/login/index.php';
+
+async function getResult(ag) {
   const browser = await puppeteer.launch({ headless: false });
-  const page = (await browser.pages())[0];
+  const page = await browser.newPage();
   page.setDefaultTimeout(0);
 
-  const formURL = 'http://lms.uaf.edu.pk/login/index.php';
+  await page.goto(formURL, { waitUntil: 'networkidle0' });
 
-  async function getResult(ag) {
-    await page.goto(formURL, { waitUntil: 'networkidle0' });
+  await page.$eval(
+    '#REG',
+    (input, ag) => {
+      input.value = ag;
 
-    await page.$eval(
-      '#REG',
-      (input, ag) => {
-        input.value = ag;
+      const form = input.parentElement.parentElement;
 
-        const form = input.parentElement.parentElement;
+      form.submit();
+    },
+    ag
+  );
 
-        form.submit();
-      },
-      ag
+  await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
+
+  const data = await parseResults(page);
+
+  await browser.close();
+
+  return data;
+}
+
+async function parseResults(page) {
+  const [infoTable, resultTable] = await page.$$('table');
+  if (!infoTable) return;
+  const [studentAg, studentName] = await infoTable.$$eval('tr', (rows) =>
+    rows.map((row) => row.lastElementChild.textContent.trim().toLowerCase())
+  );
+
+  const results = await resultTable.$$eval('tr', (rows) => {
+    const headingRow = rows.slice(0, 1)[0];
+    const dataRows = rows.slice(1, rows.length);
+
+    const headings = Array.from(headingRow.querySelectorAll('th')).map((th) =>
+      th.textContent.trim().toLowerCase()
     );
 
-    await page.waitForNavigation();
+    const results = [];
 
-    return await parseResults();
-  }
-
-  async function parseResults() {
-    const [infoTable, resultTable] = await page.$$('table');
-    const [studentAg, studentName] = await infoTable.$$eval('tr', (rows) =>
-      rows.map((row) => row.lastElementChild.textContent.trim().toLowerCase())
-    );
-
-    const results = await resultTable.$$eval('tr', (rows) => {
-      const headingRow = rows.slice(0, 1)[0];
-      const dataRows = rows.slice(1, rows.length);
-
-      const headings = Array.from(headingRow.querySelectorAll('th')).map((th) =>
-        th.textContent.trim().toLowerCase()
+    dataRows.forEach((row) => {
+      const tdContents = Array.from(row.querySelectorAll('td')).map((td) =>
+        td.textContent.trim().toLowerCase()
       );
 
-      const results = [];
+      const data = {};
 
-      dataRows.forEach((row) => {
-        const tdContents = Array.from(row.querySelectorAll('td')).map((td) =>
-          td.textContent.trim().toLowerCase()
-        );
-
-        const data = {};
-
-        headings.forEach((heading, i) => {
-          data[heading] = tdContents[i];
-        });
-
-        results.push(data);
+      headings.forEach((heading, i) => {
+        data[heading] = tdContents[i];
       });
 
-      return results;
+      results.push(data);
     });
 
-    return { studentName, studentAg, results };
-  }
+    return results;
+  });
 
-  return { getResult };
-})();
+  return { studentName, studentAg, results };
+}
+
+module.exports = { getResult };
