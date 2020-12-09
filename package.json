@@ -7,6 +7,13 @@
     "start": "node .",
     "dev": "nodemon"
   },
+  "engines": {
+    "node": "12.13.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abubakrmuhammad/uaf-lms-result-api"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
