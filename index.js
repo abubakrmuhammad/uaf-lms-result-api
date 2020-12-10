@@ -7,7 +7,8 @@ app.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`);
 });
 
-if (process.env.PROJECT_DOMAIN)
+if (process.env.HEROKU_APP_NAME) {
   setInterval(() => {
-    http.get(`http://${process.env.PROJECT_DOMAIN}.glitch.me/`);
-  }, 280000);
+    http.get(`http://${process.env.HEROKU_APP_NAME}.herokuapp.com/`);
+  }, 1000 * 60 * 29);
+}
