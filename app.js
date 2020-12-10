@@ -8,9 +8,14 @@ const app = express();
 app.use(morgan('dev'));
 
 app.get('/result/:ag', async (req, res) => {
+  const { ag } = req.params;
+  const agRegex = /20\d{2}-ag-\d{4}/i;
+
+  if (!agRegex.test(ag)) res.status(400).send('BAD REQUEST: Invalid ag number');
+
   const data = await scraper.getResult(req.params.ag);
 
-  if (!data) res.status(500).send('SERVER ERROR');
+  if (!data) res.status(404).send('RESULT NOT FOUND');
   res.status(200).json(data);
 });
 

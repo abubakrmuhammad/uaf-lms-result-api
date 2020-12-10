@@ -26,6 +26,8 @@ async function getResult(ag) {
 
   const data = await parseResults(page);
 
+  if (!data.results.length) return;
+
   const cgpa = calcCGPA(data.results);
 
   data['cgpa'] = cgpa;
