@@ -1,4 +1,5 @@
 const puppeteer = require('puppeteer');
+const qualityPoints = require('./qualityPoints');
 
 const formURL = 'http://lms.uaf.edu.pk/login/index.php';
 
@@ -24,6 +25,10 @@ async function getResult(ag) {
   await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
 
   const data = await parseResults(page);
+
+  const cgpa = calcCGPA(data.results);
+
+  data['cgpa'] = cgpa;
 
   await browser.close();
 
@@ -65,6 +70,40 @@ async function parseResults(page) {
   });
 
   return { studentName, studentAg, results };
+}
+
+function calcCGPA(results) {
+  const qPs = results.map((result) => {
+    const creditHours = result['credit hours'][0];
+    const marks = result['total'];
+
+    const currentSubjectPointList = qualityPoints[creditHours];
+    const currentSubjectVaraibleMarks = Object.keys(currentSubjectPointList)
+      .sort()
+      .map((x) => parseInt(x));
+
+    const fullPointMarks =
+      currentSubjectVaraibleMarks[currentSubjectVaraibleMarks.length - 1];
+    const onePointmarks = currentSubjectVaraibleMarks[0];
+
+    let qp = 0;
+
+    if (marks >= fullPointMarks) qp = (creditHours * 20) / 5;
+    else if (marks < onePointmarks) qp = 0;
+    else qp = currentSubjectPointList[marks];
+
+    return qp;
+  });
+
+  const totalCreditHours = results.reduce(
+    (total, result) => total + parseInt(result['credit hours'][0]),
+    0
+  );
+  const totalQPs = qPs.reduce((total, qp) => total + qp);
+
+  const cgpa = (totalQPs / totalCreditHours).toFixed(2);
+
+  return cgpa;
 }
 
 module.exports = { getResult };
