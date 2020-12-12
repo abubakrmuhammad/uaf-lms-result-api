@@ -4,10 +4,7 @@ const qualityPoints = require('./qualityPoints');
 const formURL = 'http://lms.uaf.edu.pk/login/index.php';
 
 module.exports = (async function () {
-  const browser = await puppeteer.launch({
-    args: ['--no-sandbox'],
-    headless: false,
-  });
+  const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
   async function getResult(ag) {
     const context = await browser.createIncognitoBrowserContext();
     const page = await context.newPage();
